@@ -1,54 +1,143 @@
 require('dotenv').config();
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
-let Person;
+// mongoose.connect(process.env.MONGO_URI);
+const personSchema = new Schema({
+  name: { type: String, required: true },
+  age: Number,
+  favoriteFoods: [String]
+});
 
-const createAndSavePerson = (done) => {
-  done(null /*, data*/);
+const Person = mongoose.model("Person", personSchema);
+
+var createAndSavePerson = (done) => {
+  var janeFonda = new Person({ name: "Jane Fonda", age: 84, favoriteFoods: ["eggs", "fish", "fresh fruit"] });
+
+  janeFonda.save((err, data) => {
+    if (err) {
+      console.log("ONE")
+      console.error(err);
+    } else {
+      console.log("TWO")
+      done(null, data)
+    }
+  });
 };
 
-const createManyPeople = (arrayOfPeople, done) => {
-  done(null /*, data*/);
+
+/** 4) Create many People with `Model.create()` */
+var arrayOfPeople = [
+  { name: "Frankie", age: 74, favoriteFoods: ["Del Taco"] },
+  { name: "Sol", age: 76, favoriteFoods: ["roast chicken"] },
+  { name: "Robert", age: 78, favoriteFoods: ["wine"] }
+];
+
+var createManyPeople = function (arrayOfPeople, done) {
+  Person.create(arrayOfPeople, function (err, people) {
+    if (err) return console.log(err);
+    done(null, people);
+  });
 };
+
 
 const findPeopleByName = (personName, done) => {
-  done(null /*, data*/);
+  Person.find({ name: personName }, function (err, people) {
+    if (err) return console.log(err);
+    done(null, people);
+  })
 };
+
 
 const findOneByFood = (food, done) => {
-  done(null /*, data*/);
+  Person.findOne({ favoriteFoods: food }, function (err, people) {
+    if (err) return console.log(err);
+    done(null, people);
+  })
 };
 
-const findPersonById = (personId, done) => {
-  done(null /*, data*/);
+var findPersonById = function (personId, done) {
+  Person.findById(personId, function (err, data) {
+    if (err) return console.log(err);
+    done(null, data);
+  });
 };
+
 
 const findEditThenSave = (personId, done) => {
-  const foodToAdd = "hamburger";
+  const foodToAdd = 'hamburger';
 
-  done(null /*, data*/);
+  Person.findById(personId, (err, person) => {
+    if (err) return console.log(err);
+
+    person.favoriteFoods.push(foodToAdd);
+
+    person.save((err, updatedPerson) => {
+      if (err) return console.log(err);
+      done(null, updatedPerson)
+    })
+  })
 };
 
 const findAndUpdate = (personName, done) => {
   const ageToSet = 20;
 
-  done(null /*, data*/);
+  Person.findOneAndUpdate({ name: personName }, { age: ageToSet }, { new: true }, (err, updatedDoc) => {
+    if (err) return console.log(err);
+    done(null, updatedDoc);
+  })
 };
 
+
+
+
 const removeById = (personId, done) => {
-  done(null /*, data*/);
+  Person.findByIdAndRemove(personId, function (err, docs) {
+    if (err) {
+        console.log(err)
+    }
+    else {
+      done(null, docs);
+    }
+});
 };
+
 
 const removeManyPeople = (done) => {
   const nameToRemove = "Mary";
-
-  done(null /*, data*/);
+  Person.remove({name: nameToRemove}, (err, response) => {
+    if(err) return console.log(err);
+    done(null, response);
+  })
 };
 
+
+// https://forum.freecodecamp.org/t/freecodecamp-challenge-guide-chain-search-query-helpers-to-narrow-search-results/301533
 const queryChain = (done) => {
   const foodToSearch = "burrito";
 
-  done(null /*, data*/);
+  const person = Person.find({ favoriteFoods: foodToSearch });
+
+person.sort({ name: 1 })
+.limit(2)
+.select('name favoriteFoods')
+.exec(function(error, people) {
+    if(error) return console.log(error);
+    done(null, people);
+})
+  
+  // Person.find({food:foodToSearch})
+  // .sort({ name: 1 }) // -1 for descending
+  // .limit(2)
+  // .select({ age: 0 })
+  // .exec((err,data)=>{
+  //   if(err) console.log(err);
+  //   done(null, data);
+  // })
+
+  // done(null /*, data*/);
 };
 
 /** **Well Done !!**
